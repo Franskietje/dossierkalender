@@ -1,0 +1,82 @@
+/* Base styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  background-color: #f4f4f4;
+  padding: 20px;
+  margin: 0;
+}
+
+/* Navigation styling */
+#navigation {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Calendar table styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+th {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+td {
+  background-color: #ffffff;
+}
+
+/* First column styling */
+.calendar-table th:first-child,
+.calendar-table td:first-child {
+  width: 200px; /* Wider first column */
+  text-align: left; /* Align text to the left for readability */
+}
+
+/* Calendar-specific styling */
+.calendar-table {
+  table-layout: fixed;
+}
+
+.calendar-table th, 
+.calendar-table td {
+  height: 50px;
+}
+
+/* Event type styling */
+.opbouw { background-color: #FFA500; } /* Orange for opbouw */
+.exposanten { background-color: #4a90e2; } /* Blue for exposanten */
+.beurs { background-color: #50b83c; } /* Green for beurs */
+.afbouw { background-color: #f56c6c; } /* Red for afbouw */
+
+/* Hover effect for cells */
+.calendar-table td:hover {
+  background-color: #e8f4ff;
+  cursor: pointer;
+}
+
+/* Responsive table */
+@media screen and (max-width: 600px) {
+  .calendar-table, .calendar-table thead, .calendar-table tbody, .calendar-table th, .calendar-table td, .calendar-table tr {
+      display: block;
+  }
+
+  .calendar-table th, .calendar-table td {
+      width: 100%;
+  }
+
+  .calendar-table th:first-child,
+  .calendar-table td:first-child {
+      display: none; /* Hide the first column on small screens */
+  }
+}

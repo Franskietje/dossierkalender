@@ -1,0 +1,42 @@
+body {
+    font-family: 'Calibri', sans-serif;
+    color: #5d5d5d;
+    background-color: #edeef0;
+    padding: 20px;
+    margin: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #d3d3d3;
+    text-align: center;
+    background-color: #fff;
+}
+
+th {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.calendar-table th:first-child,
+.calendar-table td:first-child {
+    width: 180px;
+}
+
+/* Hover effect */
+.calendar-table td:hover {
+    background-color: #f5f5f5;
+    cursor: pointer;
+}
+
+/* Event type styling */
+.opbouw { background-color: #FFA500; } /* Orange for opbouw */
+.exposanten { background-color: #4a90e2; } /* Blue for exposanten */
+.beurs { background-color: #50b83c; } /* Green for beurs */
+.afbouw { background-color: #f56c6c; } /* Red for afbouw */
