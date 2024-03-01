@@ -166,6 +166,8 @@ function generateCalendarWithProjects(start, dossiers) {
 
     const calendar = document.getElementById('calendar');
     calendar.innerHTML = '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the hours, minutes, seconds and milliseconds to 0
 
     // Generate header row for the 4-week span
     let headerRow = calendar.insertRow();
@@ -176,6 +178,10 @@ function generateCalendarWithProjects(start, dossiers) {
         let currentDay = new Date(start);
         currentDay.setDate(currentDay.getDate() + i);
         th.textContent = currentDay.toISOString().split('T')[0];
+        currentDay.setHours(0,0,0,0);
+        if (currentDay.getTime() === today.getTime()) {
+            th.classList.add('today'); // Apply today's styling
+        }
         headerRow.appendChild(th);
     }
 
@@ -190,7 +196,7 @@ function generateCalendarWithProjects(start, dossiers) {
             let dayCell = row.insertCell();
             let currentDay = new Date(start);
             currentDay.setDate(currentDay.getDate() + i);
-
+            currentDay.setHours(0,0,0,0);
             // Flag to check if the day is covered by any project dates
             let isDayCovered = false;
 
@@ -212,6 +218,10 @@ function generateCalendarWithProjects(start, dossiers) {
             if (!isDayCovered) {
                 dayCell.textContent = '';
             }
+            // Check and style for today, if no other coloring is active
+        if (currentDay.getTime() === today.getTime() && !dayCell.className) {
+            dayCell.classList.add('today'); // Apply today's styling
+        }
         }
     });
 }
