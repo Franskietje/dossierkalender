@@ -1,40 +1,69 @@
 document.addEventListener('DOMContentLoaded', async function () {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - (startDate.getDay() || 7) + 1); // Adjust to the start of this week
-
-    let currentStartDate = new Date(startDate);
     const mySelect = document.getElementById('PM');
-    await getPMs(mySelect); // Assume this populates the PM select dropdown
+    const startDate = adjustToStartOfWeek(new Date());
+    let currentStartDate = new Date(startDate);
 
-    // Function to update the calendar based on the selected PM and currentStartDate
-    async function updateCalendarForPMAndDate() {
-        const PM = mySelect.value; // Fetch the currently selected PM
-        const apiDossiers = await getDossiers(PM, currentStartDate); // Fetch dossiers for the PM and date
-        generateCalendarWithProjects(currentStartDate, apiDossiers); // Update the calendar
-    }
-
-    // Initial update for the calendar
-    await updateCalendarForPMAndDate();
-
-    // Add change event listener to the PM select dropdown to update calendar on PM change
-    mySelect.addEventListener('change', updateCalendarForPMAndDate);
+    await populatePMsDropdown(mySelect);
+    await updateCalendar(currentStartDate, mySelect.value);
 
     document.getElementById('prevWeek').addEventListener('click', async () => {
-        currentStartDate.setDate(currentStartDate.getDate() - 7);
-        await updateCalendarForPMAndDate(); // Use the current PM selection
+        currentStartDate = changeWeek(currentStartDate, -7);
+        await updateCalendar(currentStartDate, mySelect.value);
     });
-    
+
     document.getElementById('nextWeek').addEventListener('click', async () => {
-        currentStartDate.setDate(currentStartDate.getDate() + 7);
-        await updateCalendarForPMAndDate(); // Use the current PM selection
+        currentStartDate = changeWeek(currentStartDate, 7);
+        await updateCalendar(currentStartDate, mySelect.value);
+    });
+
+    mySelect.addEventListener('change', async () => {
+        await updateCalendar(currentStartDate, mySelect.value);
     });
 });
 
+function changeWeek(date, days) {
+    let newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + days);
+    return newDate;
+}
 
-// Navigation event listeners
+async function updateCalendar(startDate, PM) {
+    const stopDate = new Date(startDate);
+    stopDate.setDate(startDate.getDate() + 34);
+    console.log(startDate, stopDate);
+    const apiDossiers = await getDossiers(PM, startDate,stopDate);
+    if (apiDossiers) {
+        generateCalendarWithProjects(startDate, apiDossiers);
+    }
+}
+async function populatePMsDropdown(selectElement) {
+    const data = await getPMs();
+    if(data) {
+        const option = document.createElement('option');
+        option.value = "*";
+        option.text = "----------------";
+        selectElement.appendChild(option);
+        data.response.data.forEach(dossier => {
+            const option = document.createElement('option');
+            option.value = option.text = dossier.fieldData.voornaam_naam_c;
+            selectElement.appendChild(option);
+        });
+    }
+}
+function adjustToStartOfWeek(date) {
+    const adjustedDate = new Date(date);
+    const dayOfWeek = adjustedDate.getDay();
+    const difference = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust for Sunday as 0
+    adjustedDate.setDate(adjustedDate.getDate() + difference);
+    adjustedDate.setHours(0, 0, 0, 0); // Set time to the start of the day
+    return adjustedDate;
+}
 
 
-async function getDossiers(PM,currentStartDate) {
+
+async function getDossiers(PM,currentStartDate,stopDate) {
+    const storedDossiers = sessionStorage.getItem('dossiers_${PM}');
+    if (storedDossiers){return JSON.parse(storedDossiers);}else{
     var bearerToken = await getBearerToken();
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
@@ -46,8 +75,8 @@ async function getDossiers(PM,currentStartDate) {
     var raw = JSON.stringify({
         "query": [
             {
-                "projectleider1_ae": fullName,"dossiers_dossiersdataCreate::datum_van":currentStartDate.toLocaleDateString('en-US')+".."},{
-                "projectleider2_ae": fullName,"dossiers_dossiersdataCreate::datum_van":currentStartDate.toLocaleDateString('en-US')+".."
+                "projectleider1_ae": fullName,"dossiers_dossiersdataCreate::datum_van":currentStartDate.toLocaleDateString('en-US')+"..","dossiers_dossiersdataCreate::datum_tot":".."+stopDate.toLocaleDateString('en-US')},{
+                "projectleider2_ae": fullName,"dossiers_dossiersdataCreate::datum_van":currentStartDate.toLocaleDateString('en-US')+"..","dossiers_dossiersdataCreate::datum_tot":".."+stopDate.toLocaleDateString('en-US')
             }
         ],
         "sort": [
@@ -58,7 +87,7 @@ async function getDossiers(PM,currentStartDate) {
         ],
         "limit": "5000"
     });
-    //console.log (raw);
+    console.log (raw);
 
     var requestOptions = {
         method: 'POST',
@@ -74,6 +103,7 @@ async function getDossiers(PM,currentStartDate) {
         }
         const data = await response.json();
         if (data && data.response && data.response.data && data.response.data.length > 0) {
+            sessionStorage.setItem('dossier_${PM}', JSON.stringify(data));
             return data;
         } else {
             //("No data found or error fetching data");
@@ -81,20 +111,21 @@ async function getDossiers(PM,currentStartDate) {
 
     } catch (error) {
         console.error('There has been a problem with your fetch operation:', error);
-    }
+    }}
 
     
 }
 
-async function getPMs(mySelect) {
+async function getPMs() {
     
+    const storedPMs = sessionStorage.getItem("PMs");
+    if(storedPMs) {
+        return JSON.parse(storedPMs);
+    }
+
     var bearerToken = await getBearerToken();
     var myHeaders = new Headers();
-    var select = mySelect;
-    const option = document.createElement('option');
-    option.value = "*";
-    option.text = "----------------";
-    select.appendChild(option);
+    
 
     myHeaders.append("Content-Type", "application/json");
     myHeaders.append("Authorization", "Bearer " + bearerToken);
@@ -124,12 +155,10 @@ async function getPMs(mySelect) {
         }
         const data = await response.json();
         if (data && data.response && data.response.data && data.response.data.length > 0) {
-            data.response.data.forEach(dossier => {
-                const option = document.createElement('option');
-                option.value = dossier.fieldData.voornaam_naam_c;
-                option.text = dossier.fieldData.voornaam_naam_c;
-                select.appendChild(option);})
+            sessionStorage.setItem("PMs", JSON.stringify(data));
+            return data
         } else {
+            return []
             //("No data found or error fetching data");
         }
 
