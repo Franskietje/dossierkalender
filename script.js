@@ -1,25 +1,77 @@
 document.addEventListener('DOMContentLoaded', async function () {
     const mySelect = document.getElementById('PM');
-    const startDate = adjustToStartOfWeek(new Date());
-    let currentStartDate = new Date(startDate);
+    const startDatePicker = document.getElementById('startDatePicker');
+    const today = new Date();
+    //Format the date to YYYY-MM-DD
+    const formattedDate = today.toISOString().split('T')[0];
 
+    // Set the value of the date picker
+    startDatePicker.value = formattedDate;
+
+
+    // Initialize calendar to the start of the current week
+    let currentStartDate = adjustToStartOfWeek(new Date());
+
+    // Populate the PM dropdown and update the calendar on initial load
     await populatePMsDropdown(mySelect);
     await updateCalendar(currentStartDate, mySelect.value);
 
-    document.getElementById('prevWeek').addEventListener('click', async () => {
-        currentStartDate = changeWeek(currentStartDate, -7);
+    // Navigates weeks forward or backward and updates calendar
+    async function navigateWeeks(direction) {
+        // Ensure the startDatePicker has a value before attempting to create a Date object
+        if (!startDatePicker.value) {
+            console.error('Date picker value is empty.');
+            return;
+        }
+    
+        let selectedDate = new Date(startDatePicker.value);
+        // Check if selectedDate is valid
+        if (isNaN(selectedDate.getTime())) {
+            console.error('Invalid date from date picker.');
+            return;
+        }
+        var PM = mySelect.value;
+        sessionStorage.setItem(`dossiers_${PM}`,"");
+    
+        selectedDate.setHours(0, 0, 0, 0);
+        const currentStartDateObj = new Date(currentStartDate);
+        currentStartDateObj.setHours(0, 0, 0, 0);
+    
+        if (currentStartDateObj.getTime() === selectedDate.getTime()) {
+            currentStartDate = changeWeek(currentStartDate, direction * 7);
+        } else {
+            currentStartDate = changeWeek(selectedDate, direction * 7);
+            // Only update the date picker if the resulting date is valid
+            if (!isNaN(currentStartDate.getTime())) {
+                startDatePicker.value = currentStartDate.toISOString().split('T')[0];
+            } else {
+                console.error('Resulting date from changeWeek is invalid.');
+            }
+        }
+    
         await updateCalendar(currentStartDate, mySelect.value);
-    });
+    }
+    
 
-    document.getElementById('nextWeek').addEventListener('click', async () => {
-        currentStartDate = changeWeek(currentStartDate, 7);
-        await updateCalendar(currentStartDate, mySelect.value);
-    });
+    document.getElementById('prevWeek').addEventListener('click', () => navigateWeeks(-1));
+    document.getElementById('nextWeek').addEventListener('click', () => navigateWeeks(1));
 
+    // Update calendar based on PM selection
     mySelect.addEventListener('change', async () => {
+        var PM = mySelect.value;
+        sessionStorage.setItem(`dossiers_${PM}`,"");
+        await updateCalendar(currentStartDate, mySelect.value);
+    });
+
+    // Update calendar when a new start date is picked
+    startDatePicker.addEventListener('change', async function () {
+        var PM = mySelect.value;
+        sessionStorage.setItem(`dossiers_${PM}`,"");
+        currentStartDate = adjustToStartOfWeek(new Date(this.value));
         await updateCalendar(currentStartDate, mySelect.value);
     });
 });
+
 
 function changeWeek(date, days) {
     let newDate = new Date(date);
@@ -30,15 +82,17 @@ function changeWeek(date, days) {
 async function updateCalendar(startDate, PM) {
     const stopDate = new Date(startDate);
     stopDate.setDate(startDate.getDate() + 34);
-    console.log(startDate, stopDate);
-    const apiDossiers = await getDossiers(PM, startDate,stopDate);
+    console.log(startDate, stopDate,PM);
+    const apiDossiers = await getDossiers(PM, startDate, stopDate);
+    //console.log(apiDossiers);
     if (apiDossiers) {
         generateCalendarWithProjects(startDate, apiDossiers);
     }
 }
+
 async function populatePMsDropdown(selectElement) {
     const data = await getPMs();
-    if(data) {
+    if (data) {
         const option = document.createElement('option');
         option.value = "*";
         option.text = "----------------";
@@ -50,6 +104,7 @@ async function populatePMsDropdown(selectElement) {
         });
     }
 }
+
 function adjustToStartOfWeek(date) {
     const adjustedDate = new Date(date);
     const dayOfWeek = adjustedDate.getDay();
@@ -59,78 +114,81 @@ function adjustToStartOfWeek(date) {
     return adjustedDate;
 }
 
+async function getDossiers(PM, currentStartDate, stopDate) {
+    // Use template literals to embed PM variable dynamically
+    const storedDossiers = sessionStorage.getItem(`dossiers_${PM}`);
+    if (storedDossiers) {
+        return JSON.parse(storedDossiers);
+    } else {
+        const bearerToken = await getBearerToken();
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("Authorization", "Bearer " + bearerToken);
+        const fullName = PM;
+        
 
+        // Ensure correct format for your API's expectations
+        const raw = JSON.stringify({
+            "query": [
+                {
+                    "projectleider1_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US')
+                }, 
+                {
+                    "projectleider2_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US')
+                }
+            ],
+            "sort": [
+                {
+                    "fieldName": "dossiers_dossiersdataCreate::datum_van",
+                    "sortOrder": "ascend"
+                }
+            ],
+            "limit": "5000"
+        });
 
-async function getDossiers(PM,currentStartDate,stopDate) {
-    const storedDossiers = sessionStorage.getItem('dossiers_${PM}');
-    if (storedDossiers){return JSON.parse(storedDossiers);}else{
-    var bearerToken = await getBearerToken();
-    var myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", "Bearer " + bearerToken);
-    var fullName = PM;
+        const requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: raw,
+            redirect: 'follow'
+        };
 
-    
-
-    var raw = JSON.stringify({
-        "query": [
-            {
-                "projectleider1_ae": fullName,"dossiers_dossiersdataCreate::datum_van":currentStartDate.toLocaleDateString('en-US')+"..","dossiers_dossiersdataCreate::datum_tot":".."+stopDate.toLocaleDateString('en-US')},{
-                "projectleider2_ae": fullName,"dossiers_dossiersdataCreate::datum_van":currentStartDate.toLocaleDateString('en-US')+"..","dossiers_dossiersdataCreate::datum_tot":".."+stopDate.toLocaleDateString('en-US')
+        try {
+            const response = await fetch("https://fms.alterexpo.be/fmi/data/vLatest/databases/Arnout/layouts/Dossiers_form_detail/_find", requestOptions);
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
             }
-        ],
-        "sort": [
-            {
-                "fieldName": "dossiers_dossiersdataCreate::datum_van",
-                "sortOrder": "ascend"
+            const data = await response.json();
+            if (data && data.response && data.response.data && data.response.data.length > 0) {
+                sessionStorage.setItem(`dossiers_${PM}`, JSON.stringify(data)); // Corrected dynamic key
+                return data;
+            } else {
+                console.log("No data found or error fetching data");
             }
-        ],
-        "limit": "5000"
-    });
-    console.log (raw);
-
-    var requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: raw,
-        redirect: 'follow'
-    };
-
-    try {
-        const response = await fetch("https://fms.alterexpo.be/fmi/data/vLatest/databases/Arnout/layouts/Dossiers_form_detail/_find", requestOptions);
-        if (!response.ok) {
-            throw new Error('Network response was not ok'& response);
+        } catch (error) {
+            console.error('There has been a problem with your fetch operation:', error);
         }
-        const data = await response.json();
-        if (data && data.response && data.response.data && data.response.data.length > 0) {
-            sessionStorage.setItem('dossier_${PM}', JSON.stringify(data));
-            return data;
-        } else {
-            //("No data found or error fetching data");
-        }
-
-    } catch (error) {
-        console.error('There has been a problem with your fetch operation:', error);
-    }}
-
-    
+    }
 }
 
+
 async function getPMs() {
-    
+
     const storedPMs = sessionStorage.getItem("PMs");
-    if(storedPMs) {
+    if (storedPMs) {
         return JSON.parse(storedPMs);
     }
 
     var bearerToken = await getBearerToken();
     var myHeaders = new Headers();
-    
+
 
     myHeaders.append("Content-Type", "application/json");
     myHeaders.append("Authorization", "Bearer " + bearerToken);
 
-    
+
 
     var raw = JSON.stringify({
         "query": [
@@ -138,7 +196,8 @@ async function getPMs() {
                 "contactPersonen::functie": "Project Manager",
                 "contactPersonen::flag_personeel": 1
             }
-        ]    });
+        ]
+    });
     //console.log (raw);
 
     var requestOptions = {
@@ -151,14 +210,13 @@ async function getPMs() {
     try {
         const response = await fetch("https://fms.alterexpo.be/fmi/data/vLatest/databases/Arnout/layouts/Personen_form_details/_find", requestOptions);
         if (!response.ok) {
-            throw new Error('Network response was not ok'& response);
+            throw new Error('Network response was not ok' & response);
         }
         const data = await response.json();
         if (data && data.response && data.response.data && data.response.data.length > 0) {
             sessionStorage.setItem("PMs", JSON.stringify(data));
             return data
         } else {
-            return []
             //("No data found or error fetching data");
         }
 
@@ -168,7 +226,6 @@ async function getPMs() {
 
 
 }
-
 
 
 function generateCalendarWithProjects(start, dossiers) {
@@ -183,7 +240,7 @@ function generateCalendarWithProjects(start, dossiers) {
             start: subDossier["dossiers_dossiersdataCreate::datum_van"],
             end: subDossier["dossiers_dossiersdataCreate::datum_tot"]
         }))
-    })).filter(project => 
+    })).filter(project =>
         project.dates.some(date => {
             const projectStartDate = new Date(date.start);
             const projectEndDate = new Date(date.end);
@@ -191,7 +248,7 @@ function generateCalendarWithProjects(start, dossiers) {
         })
     );
 
-    console.log(projects);
+    //console.log(projects);
 
     const calendar = document.getElementById('calendar');
     calendar.innerHTML = '';
@@ -207,7 +264,7 @@ function generateCalendarWithProjects(start, dossiers) {
         let currentDay = new Date(start);
         currentDay.setDate(currentDay.getDate() + i);
         th.textContent = currentDay.toISOString().split('T')[0];
-        currentDay.setHours(0,0,0,0);
+        currentDay.setHours(0, 0, 0, 0);
         if (currentDay.getTime() === today.getTime()) {
             th.classList.add('today'); // Apply today's styling
         }
@@ -225,7 +282,7 @@ function generateCalendarWithProjects(start, dossiers) {
             let dayCell = row.insertCell();
             let currentDay = new Date(start);
             currentDay.setDate(currentDay.getDate() + i);
-            currentDay.setHours(0,0,0,0);
+            currentDay.setHours(0, 0, 0, 0);
             // Flag to check if the day is covered by any project dates
             let isDayCovered = false;
 
@@ -248,9 +305,9 @@ function generateCalendarWithProjects(start, dossiers) {
                 dayCell.textContent = '';
             }
             // Check and style for today, if no other coloring is active
-        if (currentDay.getTime() === today.getTime() && !dayCell.className) {
-            dayCell.classList.add('today'); // Apply today's styling
-        }
+            if (currentDay.getTime() === today.getTime() && !dayCell.className) {
+                dayCell.classList.add('today'); // Apply today's styling
+            }
         }
     });
 }
@@ -288,8 +345,20 @@ async function getBearerToken() {
 function openPage() {
     if (localStorage.getItem('userName') && localStorage.getItem('passWord')) {
         loadDossiers();
-        
+
     } else {
         document.location.href = 'login-page.html';
     }
+}
+
+function setToStartOfDay(date) {
+    const newDate = new Date(date);
+    newDate.setHours(0, 0, 0, 0);
+    return newDate;
+}
+
+function setToEndOfDay(date) {
+    const newDate = new Date(date);
+    newDate.setHours(23, 59, 59, 999);
+    return newDate;
 }
