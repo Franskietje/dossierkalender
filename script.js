@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             console.error('Date picker value is empty.');
             return;
         }
-    
+
         let selectedDate = new Date(startDatePicker.value);
         // Check if selectedDate is valid
         if (isNaN(selectedDate.getTime())) {
@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
         var PM = mySelect.value;
-        sessionStorage.setItem(`dossiers_${PM}`,"");
-    
+        sessionStorage.setItem(`dossiers_${PM}`, "");
+
         selectedDate.setHours(0, 0, 0, 0);
         const currentStartDateObj = new Date(currentStartDate);
         currentStartDateObj.setHours(0, 0, 0, 0);
-    
+
         if (currentStartDateObj.getTime() === selectedDate.getTime()) {
             currentStartDate = changeWeek(currentStartDate, direction * 7);
         } else {
@@ -48,10 +48,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 console.error('Resulting date from changeWeek is invalid.');
             }
         }
-    
+
         await updateCalendar(currentStartDate, mySelect.value);
     }
-    
+
 
     document.getElementById('prevWeek').addEventListener('click', () => navigateWeeks(-1));
     document.getElementById('nextWeek').addEventListener('click', () => navigateWeeks(1));
@@ -59,14 +59,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Update calendar based on PM selection
     mySelect.addEventListener('change', async () => {
         var PM = mySelect.value;
-        sessionStorage.setItem(`dossiers_${PM}`,"");
+        sessionStorage.setItem(`dossiers_${PM}`, "");
         await updateCalendar(currentStartDate, mySelect.value);
     });
 
     // Update calendar when a new start date is picked
     startDatePicker.addEventListener('change', async function () {
         var PM = mySelect.value;
-        sessionStorage.setItem(`dossiers_${PM}`,"");
+        sessionStorage.setItem(`dossiers_${PM}`, "");
         currentStartDate = adjustToStartOfWeek(new Date(this.value));
         await updateCalendar(currentStartDate, mySelect.value);
     });
@@ -82,7 +82,7 @@ function changeWeek(date, days) {
 async function updateCalendar(startDate, PM) {
     const stopDate = new Date(startDate);
     stopDate.setDate(startDate.getDate() + 34);
-    console.log(startDate, stopDate,PM);
+    //console.log(startDate, stopDate, PM);
     const apiDossiers = await getDossiers(PM, startDate, stopDate);
     //console.log(apiDossiers);
     if (apiDossiers) {
@@ -93,13 +93,19 @@ async function updateCalendar(startDate, PM) {
 async function populatePMsDropdown(selectElement) {
     const data = await getPMs();
     if (data) {
+        const selectedFullName = localStorage.getItem("fullName");
         const option = document.createElement('option');
         option.value = "*";
         option.text = "----------------";
+        option.selected=true;
         selectElement.appendChild(option);
         data.response.data.forEach(dossier => {
             const option = document.createElement('option');
             option.value = option.text = dossier.fieldData.voornaam_naam_c;
+            
+            if (option.value === selectedFullName) {
+                option.selected = true;
+            }
             selectElement.appendChild(option);
         });
     }
@@ -125,18 +131,87 @@ async function getDossiers(PM, currentStartDate, stopDate) {
         myHeaders.append("Content-Type", "application/json");
         myHeaders.append("Authorization", "Bearer " + bearerToken);
         const fullName = PM;
-        
+
 
         // Ensure correct format for your API's expectations
         const raw = JSON.stringify({
             "query": [
                 {
                     "projectleider1_ae": fullName,
-                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US')
-                }, 
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 1
+                
+                },
                 {
                     "projectleider2_ae": fullName,
-                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US')
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 1
+                },
+                {
+                    "projectleider1_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 2
+                
+                },
+                {
+                    "projectleider2_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 2
+                },
+                {
+                    "projectleider1_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 3
+                
+                },
+                {
+                    "projectleider2_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 3
+                },
+                {
+                    "projectleider1_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 4
+                
+                },
+                {
+                    "projectleider2_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 4
+                },
+                {
+                    "projectleider1_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 5
+                
+                },
+                {
+                    "projectleider2_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 5
+                },
+                {
+                    "projectleider1_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 9
+                
+                },
+                {
+                    "projectleider2_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 9
+                },
+                {
+                    "projectleider1_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 10
+                
+                },
+                {
+                    "projectleider2_ae": fullName,
+                    "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
+                    "_k2_dossierStatus_ID": 10
                 }
             ],
             "sort": [
@@ -163,12 +238,15 @@ async function getDossiers(PM, currentStartDate, stopDate) {
             const data = await response.json();
             if (data && data.response && data.response.data && data.response.data.length > 0) {
                 sessionStorage.setItem(`dossiers_${PM}`, JSON.stringify(data)); // Corrected dynamic key
+                hideErrorMessage();
                 return data;
             } else {
                 console.log("No data found or error fetching data");
             }
         } catch (error) {
             console.error('There has been a problem with your fetch operation:', error);
+            displayErrorMessage('Failed to load project data. Please try again later.');
+            clearCalendar(); // Clear the calendar or indicate an error state
         }
     }
 }
@@ -230,9 +308,11 @@ async function getPMs() {
 
 function generateCalendarWithProjects(start, dossiers) {
     const viewStartDate = new Date(start);
+    viewStartDate.setHours(0, 0, 0, 0); // Reset the time part to the start of the day
     const viewEndDate = new Date(start);
+    viewEndDate.setHours(0, 0, 0, 0);
     viewEndDate.setDate(viewStartDate.getDate() + 27); // Set the end date of the view to 4 weeks after the start
-
+    //console.log(dossiers);
     const projects = dossiers.response.data.map(dossier => ({
         name: dossier.fieldData.dossiernaam,
         dates: dossier.portalData.dossiers_dossiersdataCreate.map(subDossier => ({
@@ -243,17 +323,19 @@ function generateCalendarWithProjects(start, dossiers) {
     })).filter(project =>
         project.dates.some(date => {
             const projectStartDate = new Date(date.start);
+            projectStartDate.setHours(0, 0, 0, 0);
             const projectEndDate = new Date(date.end);
+            projectEndDate.setHours(23, 59, 59, 999); // Set to the end of the day to include projects ending on this day
             return (projectStartDate <= viewEndDate && projectEndDate >= viewStartDate);
         })
     );
 
-    //console.log(projects);
+    //console.log("projectsobject = " + projects);
 
     const calendar = document.getElementById('calendar');
     calendar.innerHTML = '';
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set the hours, minutes, seconds and milliseconds to 0
+    today.setHours(0, 0, 0, 0); // Set the hours, minutes, seconds, and milliseconds to 0
 
     // Generate header row for the 4-week span
     let headerRow = calendar.insertRow();
@@ -261,12 +343,16 @@ function generateCalendarWithProjects(start, dossiers) {
     nameHeader.textContent = 'Project Name';
     for (let i = 0; i < 28; i++) {
         let th = document.createElement('th');
-        let currentDay = new Date(start);
+        let currentDay = new Date(viewStartDate); // Clone the date to avoid modifying the original date
         currentDay.setDate(currentDay.getDate() + i);
-        th.textContent = currentDay.toISOString().split('T')[0];
-        currentDay.setHours(0, 0, 0, 0);
-        if (currentDay.getTime() === today.getTime()) {
+        th.textContent = `${currentDay.getDate()}/${currentDay.getMonth() + 1}/${currentDay.getFullYear()}`;
+        th.classList.add('vertical-text'); // Apply the vertical text class
+        // The textContent now manually constructs a locale-agnostic date string.
+        if (currentDay.setHours(0, 0, 0, 0) === today.getTime()) {
             th.classList.add('today'); // Apply today's styling
+        }
+        if (currentDay.getDay() === 0 || currentDay.getDay() === 6) { // Check for Sunday (0) or Saturday (6)
+            th.classList.add('weekend');
         }
         headerRow.appendChild(th);
     }
@@ -308,6 +394,12 @@ function generateCalendarWithProjects(start, dossiers) {
             if (currentDay.getTime() === today.getTime() && !dayCell.className) {
                 dayCell.classList.add('today'); // Apply today's styling
             }
+
+            if (currentDay.getDay() === 0 || currentDay.getDay() === 6) { // Check for Sunday (0) or Saturday (6)
+                dayCell.classList.add('weekend');
+            }
+        
+
         }
     });
 }
@@ -344,7 +436,7 @@ async function getBearerToken() {
 
 function openPage() {
     if (localStorage.getItem('userName') && localStorage.getItem('passWord')) {
-        loadDossiers();
+        //loadDossiers();
 
     } else {
         document.location.href = 'login-page.html';
@@ -362,3 +454,31 @@ function setToEndOfDay(date) {
     newDate.setHours(23, 59, 59, 999);
     return newDate;
 }
+function clearCalendar() {
+    const calendar = document.getElementById('calendar');
+    calendar.innerHTML = ''; // This clears the calendar
+    displayErrorMessage('Failed to load project data. Please try again later.');
+    // Optionally, add a message within the calendar element indicating no data is available
+    calendar.textContent = 'No data available';
+}
+
+function displayErrorMessage(message) {
+    const errorContainer = document.getElementById('error-message'); // Assuming you have an element with this id in your HTML
+    errorContainer.textContent = message;
+    errorContainer.style.display = 'block'; // Make sure the element is visible
+}
+
+function hideErrorMessage() {
+    const errorContainer = document.getElementById('error-message'); // Assuming you have an element with this id in your HTML
+    errorContainer.style.display = 'none'; // Make sure the element is visible
+}
+
+document.getElementById('logoutButton').addEventListener('click', function() {
+    // Implement your log out logic here
+    // For example, clear localStorage or session storage
+    localStorage.clear(); // Or sessionStorage.clear();
+
+    // Redirect to the login page or show a log out confirmation
+    window.location.href = 'login-page.html'; // Assuming 'login.html' is your login page
+});
+

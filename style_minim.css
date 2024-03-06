@@ -15,10 +15,11 @@ th, td {
     
     border: 1px solid #eaeaea;
     text-align: center;
+    font-family:  Arial, sans-serif;
 }
 .calendar-table th:first-child,
 .calendar-table td:first-child {
-    width: auto;
+    width: 30%;
     text-align: left;
 }
  
@@ -30,14 +31,19 @@ th, td {
 th {
     background-color: #f5f5f5;
     color: #333;
+    border: 0px ;
 }
 
 /* Style for today's date */
 .today {
-    background-color: #d3e7fd; /* Light yellow background */
+    background-color: #ffe3fa; /* Light yellow background */
     font-weight: bold;
 }
 
+.weekend {
+    background-color: #daf0ff; /* Light gray background */
+    color: #666; /* Darker text color */
+}
 
 
 /* Hover effect */
@@ -53,3 +59,31 @@ th {
 .afbouw { background-color: #f01c1c; } /* Red for afbouw */
 .vooropbouw{background-color: #f7f8d2;}
 .lossen{background-color: #cf2e92;}
+
+
+.vertical-text {
+    writing-mode: vertical-lr; /* Makes the text vertical */
+    transform: rotate(190deg); /* Flips the text to make it readable from bottom to top */
+    text-align: center; /* Centers text */
+    white-space: nowrap; /* Prevents text from wrapping */
+}
+
+.logout-container {
+    position: fixed; /* Fixed positioning to keep it in place when scrolling */
+    top: 10px; /* Distance from the top of the viewport */
+    right: 10px; /* Distance from the right of the viewport */
+    z-index: 1000; /* Ensures it stays above other content */
+}
+
+#logoutButton {
+    padding: 5px 10px; /* Adjust padding to your preference */
+    background-color: #ff20c7; /* Red background color for the log out button */
+    color: white; /* White text color */
+    border: none; /* Remove border */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Change mouse cursor on hover */
+}
+
+#logoutButton:hover {
+    background-color: #f5309c; /* Darker shade of red on hover */
+}

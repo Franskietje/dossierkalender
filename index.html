@@ -7,6 +7,11 @@
 <link rel="stylesheet" href="style_minim.css"> <!-- Link to CSS file -->
 </head>
 <body  onload="openPage()">
+
+    <div class="logout-container">
+        <button id="logoutButton">Log Out</button>
+    </div>
+    
     <div><select id="PM"></select></div>
     <br>
     <div id="navigation">
@@ -22,6 +27,7 @@
     <table id="calendar" class="calendar-table"></table>
     <script src="script.js"></script>
 
+    <div id="error-message" style="display: none; color: red;"> <!-- Error message will go here --> </div>
     
     </body>
     </html>
