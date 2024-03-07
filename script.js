@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function () {
+    resetInactivityTimeout();
     const mySelect = document.getElementById('PM');
     const startDatePicker = document.getElementById('startDatePicker');
     const today = new Date();
@@ -481,4 +482,26 @@ document.getElementById('logoutButton').addEventListener('click', function() {
     // Redirect to the login page or show a log out confirmation
     window.location.href = 'login-page.html'; // Assuming 'login.html' is your login page
 });
+
+function logOut() {
+    localStorage.clear(); // Or any other logout procedures
+    window.location.href = 'login-page.html'; // Redirect to login page
+}
+
+
+let inactivityTimeout;
+
+function resetInactivityTimeout() {
+    clearTimeout(inactivityTimeout); // Clear the existing timeout
+    // Set a new timeout
+    inactivityTimeout = setTimeout(logOut, 600000); // 600000 ms = 10 minutes
+}
+// List of events that should reset the timeout
+const events = ['mousemove', 'keydown', 'scroll', 'click'];
+
+events.forEach(function(event) {
+    window.addEventListener(event, resetInactivityTimeout);
+});
+
+
 
