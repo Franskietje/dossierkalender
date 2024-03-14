@@ -317,6 +317,8 @@ function generateCalendarWithProjects(start, dossiers) {
     const projects = dossiers.response.data.map(dossier => ({
         name: dossier.fieldData.dossiernaam,
         id: dossier.fieldData._k1_dossier_ID,
+        PM1: dossier.fieldData.projectleider1_ae,
+        PM2: dossier.fieldData.projectleider2_ae,
         dates: dossier.portalData.dossiers_dossiersdataCreate.map(subDossier => ({
             type: subDossier["dossiers_dossiersdataCreate::type"],
             start: subDossier["dossiers_dossiersdataCreate::datum_van"],
@@ -367,6 +369,8 @@ function generateCalendarWithProjects(start, dossiers) {
         nameCell.addEventListener('click',function(){
             window.location.href = "fmp://fms.alterexpo.be/Arnout.fmp12?script=Web.001_Open_dossier&$dossierID=" + project.id;
         });
+        nameCell.title = "PM1: " + project.PM1 + "\nPM2: " + project.PM2 ;
+
 
         // Iterate through each day in the 4-week span for this project
         for (let i = 0; i < 28; i++) {
