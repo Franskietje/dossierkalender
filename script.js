@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Populate the PM dropdown and update the calendar on initial load
     await populatePMsDropdown(mySelect);
-    
+
     await populateWLsDropdown(mySelect2);
     await updateCalendar(currentStartDate, mySelect.value, mySelect2.value);
 
@@ -38,19 +38,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Update calendar when a new start date is picked
     startDatePicker.addEventListener('change', async function () {
         var PM = mySelect.value;
+
         sessionStorage.setItem(`dossiers_${PM}`, "");
         currentStartDate = adjustToStartOfWeek(new Date(this.value));
-        await updateCalendar(currentStartDate, mySelect.value);
+        await updateCalendar(currentStartDate, mySelect.value, mySelect2.value);
     });
 });
 async function updateCalendar(startDate, PM, WL) {
     const stopDate = new Date(startDate);
     stopDate.setDate(startDate.getDate() + 34);
-    console.log(startDate, stopDate, PM, WL);
+    //console.log(startDate, stopDate, PM, WL);
     const apiDossiers = await getDossiers(PM, startDate, stopDate, WL);
-    console.log(apiDossiers);
+    //console.log(apiDossiers);
     if (apiDossiers) {
-        generateCalendarWithProjects(startDate, apiDossiers);
+        generateCalendarWithProjects(startDate, apiDossiers, PM, WL);
     }
 }
 async function populatePMsDropdown(selectElement) {
@@ -60,12 +61,12 @@ async function populatePMsDropdown(selectElement) {
         const option = document.createElement('option');
         option.value = "*";
         option.text = "----------------";
-        option.selected=true;
+        option.selected = true;
         selectElement.appendChild(option);
         data.response.data.forEach(dossier => {
             const option = document.createElement('option');
             option.value = option.text = dossier.fieldData.voornaam_naam_c;
-            
+
             if (option.value === selectedFullName) {
                 option.selected = true;
             }
@@ -80,13 +81,13 @@ async function populateWLsDropdown(selectElement) {
         const option = document.createElement('option');
         option.value = "*";
         option.text = "----------------";
-        option.selected=true;
+        option.selected = true;
         selectElement.appendChild(option);
         data.response.data.forEach(dossier => {
             const option = document.createElement('option');
             option.value = dossier.fieldData._k1_contactPersoon_ID;
             option.text = dossier.fieldData.voornaam_naam_c;
-            
+
             if (option.text === selectedFullName) {
                 option.selected = true;
             }
@@ -178,7 +179,7 @@ async function getPMs() {
 
 
 }
-async function getWLs(){
+async function getWLs() {
 
     const storedWLs = sessionStorage.getItem("WLs");
     if (storedWLs) {
@@ -232,45 +233,45 @@ async function getWLs(){
 
 }
 async function getDossiers(PM, currentStartDate, stopDate, WL) {
-    
-        const bearerToken = await getBearerToken();
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("Authorization", "Bearer " + bearerToken);
-        const fullName = PM;
-        var body = await constructRAW(PM, currentStartDate, stopDate, WL);
-        console.log("dit is de body die gezonden wordt: " +body)
-        
-        // Ensure correct format for your API's expectations
-        const raw = body;
 
-        const requestOptions = {
-            method: 'POST',
-            headers: myHeaders,
-            body: raw,
-            redirect: 'follow'
-        };
+    const bearerToken = await getBearerToken();
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Authorization", "Bearer " + bearerToken);
+    var body = await constructRAW(PM, currentStartDate, stopDate, WL);
+    //console.log("dit is de body die gezonden wordt: " + body)
 
-        try {
-            const response = await fetch("https://fms.alterexpo.be/fmi/data/vLatest/databases/Arnout/layouts/Dossiers_form_detail/_find", requestOptions);
-            if (!response.ok) {
-                throw new Error(`Network response was not ok: ${response.statusText}`);
-            }
-            const data = await response.json();
-            if (data && data.response && data.response.data && data.response.data.length > 0) {
-                sessionStorage.setItem(`dossiers_${PM}`, JSON.stringify(data)); // Corrected dynamic key
-                hideErrorMessage();
-                return data;
-            } else {
-                console.log("No data found or error fetching data");
-            }
-        } catch (error) {
-            console.error('There has been a problem with your fetch operation:', error);
-            displayErrorMessage('Failed to load project data. Please try again later.');
-            clearCalendar(); // Clear the calendar or indicate an error state
+    // Ensure correct format for your API's expectations
+    const raw = body;
+
+    const requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: raw,
+        redirect: 'follow'
+    };
+
+    try {
+        const response = await fetch("https://fms.alterexpo.be/fmi/data/vLatest/databases/Arnout/layouts/Dossiers_form_detail/_find", requestOptions);
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
         }
-        
+        const data = await response.json();
+
+        if (data && data.response && data.response.data && data.response.data.length > 0) {
+            sessionStorage.setItem(`dossiers_${PM}`, JSON.stringify(data)); // Corrected dynamic key
+            hideErrorMessage();
+            return data;
+        } else {
+            console.log("No data found or error fetching data");
+        }
+    } catch (error) {
+        console.error('There has been a problem with your fetch operation:', error);
+        displayErrorMessage('Failed to load project data. Please try again later.');
+        clearCalendar(); // Clear the calendar or indicate an error state
     }
+
+}
 
 async function getBearerToken() {
 
@@ -297,7 +298,7 @@ async function getBearerToken() {
     return token;
 }
 
-async function constructRAW(PM,currentStartDate,stopDate,WL){
+async function constructRAW(PM, currentStartDate, stopDate, WL) {
     if (WL === "*") {
         var body = JSON.stringify({
             "query": [
@@ -305,7 +306,7 @@ async function constructRAW(PM,currentStartDate,stopDate,WL){
                     "projectleider1_ae": PM,
                     "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
                     "_k2_dossierStatus_ID": 1
-                
+
                 },
                 {
                     "projectleider2_ae": PM,
@@ -316,7 +317,7 @@ async function constructRAW(PM,currentStartDate,stopDate,WL){
                     "projectleider1_ae": PM,
                     "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
                     "_k2_dossierStatus_ID": 2
-                
+
                 },
                 {
                     "projectleider2_ae": PM,
@@ -327,7 +328,7 @@ async function constructRAW(PM,currentStartDate,stopDate,WL){
                     "projectleider1_ae": PM,
                     "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
                     "_k2_dossierStatus_ID": 3
-                
+
                 },
                 {
                     "projectleider2_ae": PM,
@@ -338,7 +339,7 @@ async function constructRAW(PM,currentStartDate,stopDate,WL){
                     "projectleider1_ae": PM,
                     "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
                     "_k2_dossierStatus_ID": 4
-                
+
                 },
                 {
                     "projectleider2_ae": PM,
@@ -349,7 +350,7 @@ async function constructRAW(PM,currentStartDate,stopDate,WL){
                     "projectleider1_ae": PM,
                     "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
                     "_k2_dossierStatus_ID": 5
-                
+
                 },
                 {
                     "projectleider2_ae": PM,
@@ -360,7 +361,7 @@ async function constructRAW(PM,currentStartDate,stopDate,WL){
                     "projectleider1_ae": PM,
                     "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
                     "_k2_dossierStatus_ID": 9
-                
+
                 },
                 {
                     "projectleider2_ae": PM,
@@ -371,7 +372,7 @@ async function constructRAW(PM,currentStartDate,stopDate,WL){
                     "projectleider1_ae": PM,
                     "dossiers_dossiersdataCreate::datum_van": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US'),
                     "_k2_dossierStatus_ID": 10
-                
+
                 },
                 {
                     "projectleider2_ae": PM,
@@ -388,67 +389,70 @@ async function constructRAW(PM,currentStartDate,stopDate,WL){
             "limit": "5000"
         });
         return body;
-        } else{
-            const bearerToken = await getBearerToken();
+    } else {
+        const bearerToken = await getBearerToken();
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         myHeaders.append("Authorization", "Bearer " + bearerToken);
-            const raw2 = JSON.stringify({
-                "query": [
-                    {"_k2_werfleider_ID":WL,
-                    "datum":currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US')}
-                ],
-                "sort": [
-                    {
-                        "fieldName": "datum",
-                        "sortOrder": "ascend"
-                    }
-                ],
-                "limit": "5000"
-            });
-           
-            const requestOptions = {
-                method: 'POST',
-                headers: myHeaders,
-                body: raw2,
-                redirect: 'follow'
-            };
-    
-            try {
-                const response = await fetch("https://fms.alterexpo.be/fmi/data/vLatest/databases/Arnout/layouts/_postitdetails/_find", requestOptions);
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
+        const raw2 = JSON.stringify({
+            "query": [
+                {
+                    "_k2_werfleider_ID": WL,
+                    "datum": currentStartDate.toLocaleDateString('en-US') + ".." + stopDate.toLocaleDateString('en-US')
                 }
-                const data = await response.json();
-                if (data && data.response && data.response.data && data.response.data.length > 0) {
-                    sessionStorage.setItem(`dossiers_${WL}`, JSON.stringify(data)); // Corrected dynamic key
-                    hideErrorMessage();
-                    console.log("jazee");
-                    const queries = {
-                        "query": data.response.data.map(item => {
-                            return { "_k1_dossier_ID": item.fieldData._k2_dossier_ID };
-                        })
-                    };
-                    const queriesString = JSON.stringify(queries);
-                    console.log(queriesString);
-                    return queriesString;
-                } else {
-                    console.log("No data found or error fetching data");
+            ],
+            "sort": [
+                {
+                    "fieldName": "datum_text",
+                    "sortOrder": "ascend"
                 }
-            } catch (error) {
-                console.error('There has been a problem with your fetch operation:', error);
-                displayErrorMessage('Failed to load project data. Please try again later.');
-                clearCalendar(); // Clear the calendar or indicate an error state
-            }
+            ],
+            "limit": "5000"
+        });
 
+        const requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: raw2,
+            redirect: 'follow'
+        };
+
+        try {
+            const response = await fetch("https://fms.alterexpo.be/fmi/data/vLatest/databases/Arnout/layouts/_postitdetails/_find", requestOptions);
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log(data);
+            if (data && data.response && data.response.data && data.response.data.length > 0) {
+                sessionStorage.setItem(`dossiers_${WL}`, JSON.stringify(data)); // Corrected dynamic key
+                hideErrorMessage();
+                //console.log(sessionStorage.getItem(`dossiers_${WL}`));
+                const queries = {
+                    "query": data.response.data.map(item => {
+                        return { "_k1_dossier_ID": item.fieldData._k2_dossier_ID };
+                    })
+                };
+                const queriesString = JSON.stringify(queries);
+                //console.log(queriesString);
+                return queriesString;
+            } else {
+                console.log("No data found or error fetching data");
+            }
+        } catch (error) {
+            console.error('There has been a problem with your fetch operation:', error);
+            displayErrorMessage('Failed to load project data. Please try again later.');
+            clearCalendar(); // Clear the calendar or indicate an error state
         }
 
-        };
-    
+    }
+
+};
+
 
 
 // Event Listeners and Handlers
-document.getElementById('logoutButton').addEventListener('click', function() {
+document.getElementById('logoutButton').addEventListener('click', function () {
     // Implement your log out logic here
     // For example, clear localStorage or session storage
     localStorage.clear(); // Or sessionStorage.clear();
@@ -461,33 +465,81 @@ document.getElementById('nextWeek').addEventListener('click', () => navigateWeek
 
 
 // UI Manipulation
-function generateCalendarWithProjects(start, dossiers) {
-    console.log(dossiers);
+function generateCalendarWithProjects(start, dossiers, PM, WL) {
+
     const viewStartDate = new Date(start);
     viewStartDate.setHours(0, 0, 0, 0); // Reset the time part to the start of the day
     const viewEndDate = new Date(start);
     viewEndDate.setHours(0, 0, 0, 0);
     viewEndDate.setDate(viewStartDate.getDate() + 27); // Set the end date of the view to 4 weeks after the start
-    //console.log(dossiers);
-    const projects = dossiers.response.data.map(dossier => ({
-        name: dossier.fieldData.dossiernaam,
-        id: dossier.fieldData._k1_dossier_ID,
-        PM1: dossier.fieldData.projectleider1_ae,
-        PM2: dossier.fieldData.projectleider2_ae,
-        dates: dossier.portalData.dossiers_dossiersdataCreate.map(subDossier => ({
-            type: subDossier["dossiers_dossiersdataCreate::type"],
-            start: subDossier["dossiers_dossiersdataCreate::datum_van"],
-            end: subDossier["dossiers_dossiersdataCreate::datum_tot"]
-        }))
-    })).filter(project =>
+
+
+    let projects = []; // Initialize projects array
+
+    if (WL === "*") {
+        // If WL is "*", use the dossier data directly from dossiers.response.data
+        projects = dossiers.response.data.map(dossier => ({
+            name: dossier.fieldData.dossiernaam,
+            id: dossier.fieldData._k1_dossier_ID,
+            PM1: dossier.fieldData.projectleider1_ae,
+            PM2: dossier.fieldData.projectleider2_ae,
+            dates: dossier.portalData.dossiers_dossiersdataCreate.map(subDossier => ({
+                type: subDossier["dossiers_dossiersdataCreate::type"],
+                start: subDossier["dossiers_dossiersdataCreate::datum_van"],
+                end: subDossier["dossiers_dossiersdataCreate::datum_tot"]
+            }))
+        }));
+    } else {
+        projects = dossiers.response.data.map(dossier => {
+            // Structure for the project with name, PM1, and PM2 from dossiers.response.data
+            let projectData = {
+                name: dossier.fieldData.dossiernaam,
+                id: dossier.fieldData._k1_dossier_ID,
+                PM1: dossier.fieldData.projectleider1_ae,
+                PM2: dossier.fieldData.projectleider2_ae,
+                dates: [] // Initialize an empty array for dates
+            };
+
+            // Only proceed if WL is not "*"
+
+            const storedDataString = sessionStorage.getItem(`dossiers_${WL}`);
+            const storedData = JSON.parse(storedDataString) || { response: { data: [] } };
+
+            // Loop through storedData to find matches and add date objects
+            storedData.response.data.forEach(storedDossier => {
+                if (storedDossier.fieldData._k2_dossier_ID === dossier.fieldData._k1_dossier_ID) {
+                    // Match found, add date objects to the project's dates
+                    
+                        projectData.dates.push({
+                            type: storedDossier.fieldData.opmerking,
+                            start: storedDossier.fieldData.datum,
+                            end: storedDossier.fieldData.datum
+                        });
+                   
+
+                }
+            });
+            return projectData;
+        });
+    }
+
+    // Filter and sort logic remains the same, acting on the now-populated projects array
+    projects = projects.filter(project =>
         project.dates.some(date => {
             const projectStartDate = new Date(date.start);
             projectStartDate.setHours(0, 0, 0, 0);
             const projectEndDate = new Date(date.end);
-            projectEndDate.setHours(23, 59, 59, 999); // Set to the end of the day to include projects ending on this day
+            projectEndDate.setHours(23, 59, 59, 999);
             return (projectStartDate <= viewEndDate && projectEndDate >= viewStartDate);
         })
-    );
+    ).sort((a, b) => {
+        // Sorting logic remains unchanged
+        const earliestStartDateA = a.dates.reduce((earliest, current) => new Date(earliest) < new Date(current.start) ? earliest : current.start, a.dates[0].start);
+        const earliestStartDateB = b.dates.reduce((earliest, current) => new Date(earliest) < new Date(current.start) ? earliest : current.start, b.dates[0].start);
+
+        return new Date(earliestStartDateA) - new Date(earliestStartDateB);
+    });
+
 
     //console.log("projectsobject = " + projects);
 
@@ -521,10 +573,10 @@ function generateCalendarWithProjects(start, dossiers) {
         let row = calendar.insertRow();
         let nameCell = row.insertCell();
         nameCell.textContent = project.name;
-        nameCell.addEventListener('click',function(){
+        nameCell.addEventListener('click', function () {
             window.location.href = "fmp://fms.alterexpo.be/Arnout.fmp12?script=Web.001_Open_dossier&$dossierID=" + project.id;
         });
-        nameCell.title = "PM1: " + project.PM1 + "\nPM2: " + project.PM2 ;
+        nameCell.title = "PM1: " + project.PM1 + "\nPM2: " + project.PM2;
 
 
         // Iterate through each day in the 4-week span for this project
@@ -544,9 +596,15 @@ function generateCalendarWithProjects(start, dossiers) {
 
                 if (currentDay >= projectStartDate && currentDay <= projectEndDate) {
                     // Apply color coding based on the date's type
-                    dayCell.className = date.type.toLowerCase().replace(/\s+/g, '-'); // Normalize class name
-                    dayCell.title = date.type; // Add title for hover-over text
-                    isDayCovered = true;
+                    if (WL === "*") {
+                        dayCell.className = date.type.toLowerCase().replace(/\s+/g, '-'); // Normalize class name
+                        dayCell.title = date.type; // Add title for hover-over text
+                        isDayCovered = true;
+                    } else {
+                        dayCell.className = "WL";
+                        dayCell.title = date.type;
+                        isDayCovered = true;
+                    }
                 }
             });
 
@@ -562,7 +620,7 @@ function generateCalendarWithProjects(start, dossiers) {
             if (currentDay.getDay() === 0 || currentDay.getDay() === 6) { // Check for Sunday (0) or Saturday (6)
                 dayCell.classList.add('weekend');
             }
-        
+
 
         }
     });
@@ -597,7 +655,7 @@ function resetInactivityTimeout() {
     inactivityTimeout = setTimeout(logOut, 600000); // 600000 ms = 10 minutes
 }
 const events = ['mousemove', 'keydown', 'scroll', 'click'];
-events.forEach(function(event) {
+events.forEach(function (event) {
     window.addEventListener(event, resetInactivityTimeout);
 });
 
@@ -605,6 +663,7 @@ events.forEach(function(event) {
 // Navigation and Week Adjustment
 async function navigateWeeks(direction) {
     const mySelect = document.getElementById('PM');
+    const mySelect2 = document.getElementById('WL');
     let currentStartDate = adjustToStartOfWeek(new Date());
     // Ensure the startDatePicker has a value before attempting to create a Date object
     if (!startDatePicker.value) {
@@ -637,7 +696,7 @@ async function navigateWeeks(direction) {
         }
     }
 
-    await updateCalendar(currentStartDate, mySelect.value);
+    await updateCalendar(currentStartDate, mySelect.value, mySelect2.value);
 }
 function changeWeek(date, days) {
     let newDate = new Date(date);
