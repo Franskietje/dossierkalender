@@ -273,6 +273,45 @@ async function getDossiers(PM, currentStartDate, stopDate, WL) {
 
 }
 
+async function getPostItDetails(datum, dossierId) {
+    const bearerToken = await getBearerToken();
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("Authorization", "Bearer " + bearerToken);
+    var requestBody = JSON.stringify({
+        "query": [{
+            "_postitdetails::datum": datum,
+            "_k2_dossier_ID": dossierId
+        }]
+    });
+    const requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: requestBody,
+        redirect: 'follow'
+    };
+
+    try {
+        const response = await fetch("https://fms.alterexpo.be/fmi/data/vLatest/databases/Arnout/layouts/_postitdetails/_find", requestOptions);
+        if (!response.ok) {
+            throw new Error('Network response was not ok' & response);
+        }
+        const data = await response.json();
+        //console.log ("apicall: "+ JSON.stringify(data));
+        if (data && data.response && data.response.data && data.response.data.length > 0) {
+            //sessionStorage.setItem("WLs", JSON.stringify(data));
+            return JSON.stringify(data);
+        } else {
+            ("No data found or error fetching data");
+        }
+
+    } catch (error) {
+        console.error('There has been a problem with your fetch operation:', error);
+    }
+
+
+}
+
 async function getBearerToken() {
 
     const username = localStorage.getItem('userName');
@@ -509,13 +548,13 @@ function generateCalendarWithProjects(start, dossiers, PM, WL) {
             storedData.response.data.forEach(storedDossier => {
                 if (storedDossier.fieldData._k2_dossier_ID === dossier.fieldData._k1_dossier_ID) {
                     // Match found, add date objects to the project's dates
-                    
-                        projectData.dates.push({
-                            type: storedDossier.fieldData.opmerking,
-                            start: storedDossier.fieldData.datum,
-                            end: storedDossier.fieldData.datum
-                        });
-                   
+
+                    projectData.dates.push({
+                        type: storedDossier.fieldData.opmerking,
+                        start: storedDossier.fieldData.datum,
+                        end: storedDossier.fieldData.datum
+                    });
+
 
                 }
             });
@@ -620,6 +659,69 @@ function generateCalendarWithProjects(start, dossiers, PM, WL) {
             if (currentDay.getDay() === 0 || currentDay.getDay() === 6) { // Check for Sunday (0) or Saturday (6)
                 dayCell.classList.add('weekend');
             }
+            // Add a click event to the cell
+            dayCell.addEventListener('click', async function () {
+                var modal = document.getElementById("myModal");
+                modal.style.display = "block";
+                var span = document.getElementsByClassName("close")[0];
+                span.onclick = function () {
+                    modal.style.display = "none";
+                }
+                var wlDetail = document.getElementById("werfLeiderDetailInhoud");
+                var oaDetail = document.getElementById("oaDetailInhoud");
+                var logistiekDetail = document.getElementById("logistiekDetailInhoud");
+                var infoDetail = document.getElementById("infoDetailInhoud");
+                wlDetail.innerHTML = "";
+                oaDetail.innerHTML = "";
+                logistiekDetail.innerHTML = "";
+                infoDetail.innerHTML = "";
+                var datum = currentDay.toLocaleDateString('en-US');
+                var dossierId = project.id;
+                var postitDetail = await getPostItDetails(datum, dossierId);
+                //console.log(postitDetail);
+                var dataObject = JSON.parse(postitDetail);
+
+                dataObject.response.data.forEach(postitEntry => {
+                    if (postitEntry.fieldData._k2_type_ID_c === 1) {
+                        wlDetail.innerHTML += postitEntry.fieldData.type_info_ae;
+                        if (postitEntry.fieldData.van_uur !== "") {
+
+                            wlDetail.innerHTML += "  van: " + postitEntry.fieldData.van_uur;
+                        }
+                        if (postitEntry.fieldData.tot_uur !== "") {
+                            wlDetail.innerHTML += "  tot: " + postitEntry.fieldData.tot_uur;
+                        }
+                        wlDetail.innerHTML += "<br>";
+                    }
+                    else if (postitEntry.fieldData._k2_type_ID_c === 2) {
+                        oaDetail.innerHTML += postitEntry.fieldData.type_info_ae;
+                        if (postitEntry.fieldData.van_uur !== "") {
+                            oaDetail.innerHTML += "  van: " + postitEntry.fieldData.van_uur
+                        }
+                        if (postitEntry.fieldData.tot_uur !== "") {
+                            oaDetail.innerHTML += "  tot:" + postitEntry.fieldData.tot_uur;
+                        }
+                        if (postitEntry.fieldData.aantal !== "") {
+                            oaDetail.innerHTML += "   aantal: " + postitEntry.fieldData.aantal;
+                        }
+                        oaDetail.innerHTML += "<br>";
+                    }
+                    else if (postitEntry.fieldData._k2_type_ID_c === 3) {
+                        logistiekDetail.innerHTML += postitEntry.fieldData.type_info_ae;
+                        if (postitEntry.fieldData.van_uur !== "") {
+                            logistiekDetail.innerHTML += "  van: " + postitEntry.fieldData.van_uur
+                        }
+                        if (postitEntry.fieldData.tot_uur) {
+                            logistiekDetail.innerHTML += "  tot:" + postitEntry.fieldData.tot_uur
+                        }
+                        if (postitEntry.fieldData.aantal !== "") {
+                            logistiekDetail.innerHTML += "   aantal: " + postitEntry.fieldData.aantal;
+                        }
+                        logistiekDetail.innerHTML += "<br>";
+                    }
+                    //infoDetail.innerHTML += storedDossier.fieldData.opmerking;
+                });
+            });
 
 
         }

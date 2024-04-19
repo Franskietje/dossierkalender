@@ -1,33 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Project Calendar</title>
-<link rel="stylesheet" href="style_minim.css"> <!-- Link to CSS file -->
-</head>
-<body  onload="openPage()">
 
-    <div class="logout-container">
-        <button id="logoutButton">Log Out</button>
-    </div>
-    
-    <div><select id="PM"></select><select id="WL"></select></div>
-    <br>
-    <div id="navigation">
-        <button id="prevWeek">← Previous Week</button>
-        <button id="nextWeek">Next Week →</button>
-    </div>
-    <br>
-    <div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Calendar</title>
+  <link rel="stylesheet" href="style_minim.css"> <!-- Link to CSS file -->
+</head>
+
+<body onload="openPage()">
+
+  <div class="logout-container">
+    <button id="logoutButton">Log Out</button>
+  </div>
+
+  <div><select id="PM"></select><select id="WL"></select></div>
+  <br>
+  <div id="navigation">
+    <button id="prevWeek">← Previous Week</button>
+    <button id="nextWeek">Next Week →</button>
+  </div>
+  <br>
+  <div>
     <label for="startDatePicker">Date:</label>
     <input type="date" id="startDatePicker">
-</div>
-<br>
-    <table id="calendar" class="calendar-table"></table>
-    <script src="script.js"></script>
+  </div>
+  <br>
+  <table id="calendar" class="calendar-table"></table>
+  <script src="script.js"></script>
 
-    <div id="error-message" style="display: none; color: red;"> <!-- Error message will go here --> </div>
-    
-    </body>
-    </html>
+  <div id="error-message" style="display: none; color: red;"> <!-- Error message will go here --> </div>
+
+  <div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close">&times;</span>
+        <h2>Modal Header</h2>
+      </div>
+
+      <div class="modal-body" id="modalBody">
+        <div class="werfLeiderDetail">
+          <div class="werfLeiderDetailTitel">
+            <p>Werfleider</p>
+          </div>
+          <div class="werfLeiderDetailInhoud" id="werfLeiderDetailInhoud">
+          </div>
+
+          <div class="oaDetailTitel">
+            <p>Onderaannemer</p>
+          </div>
+          <div class="oaDetailInhoud" id="oaDetailInhoud">
+          </div>
+
+          <div class="logistiekDetailTitel">
+            <p>Logistiek</p>
+          </div>
+          <div class="logistiekDetailInhoud" id="logistiekDetailInhoud">
+          </div>
+
+          <div class="infoDetailTitel">
+            <p>Info</p>
+          </div>
+          <div class="infoDetailInhoud" id="infoDetailInhoud">
+          </div>
+
+
+
+          
+          
+        </div>
+        <div class="modal-footer">
+          <h3>Modal Footer</h3>
+        </div>
+      </div>
+
+    </div>
+
+</body>
+
+</html>
