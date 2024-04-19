@@ -673,6 +673,12 @@ function generateCalendarWithProjects(start, dossiers, PM, WL) {
                         modal.style.display = "none";
                     }
                 };
+                window.ontouchend = function(event) {
+                    var content = document.getElementById("modal-content");
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                    }
+                };
                 var wlDetail = document.getElementById("werfLeiderDetailInhoud");
                 var oaDetail = document.getElementById("oaDetailInhoud");
                 var logistiekDetail = document.getElementById("logistiekDetailInhoud");
